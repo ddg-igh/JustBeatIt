@@ -6,8 +6,6 @@ import android.content.DialogInterface;
 import android.content.res.Configuration;
 import android.hardware.Camera;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.os.PowerManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -21,9 +19,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JustBeatItActivity extends AppCompatActivity {
@@ -35,7 +30,7 @@ public class JustBeatItActivity extends AppCompatActivity {
     private static SurfaceHolder previewHolder = null;
 
     private static Camera camera = null;
-    private static JustBeatItView image = null;
+    private static JustBeatItView graph = null;
 
     private static TextView status = null;
 
@@ -84,6 +79,8 @@ public class JustBeatItActivity extends AppCompatActivity {
                     //preview.setVisibility(View.GONE);
 
                     fab.setImageResource(android.R.drawable.ic_media_play);
+
+                    graph.setEnabled(false);
                 } else {
                     Snackbar.make(view, getString(R.string.scan_resume), Snackbar.LENGTH_LONG).setAction("Action", null).show();
                     enabled = true;
@@ -92,6 +89,8 @@ public class JustBeatItActivity extends AppCompatActivity {
 
                     //preview.setVisibility(View.VISIBLE);
                     fab.setImageResource(android.R.drawable.ic_media_pause);
+
+                    graph.setEnabled(true);
                 }
                 camera.setParameters(parameters);
             }
@@ -102,7 +101,7 @@ public class JustBeatItActivity extends AppCompatActivity {
         previewHolder.addCallback(surfaceCallback);
         previewHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
-        image =(JustBeatItView) findViewById(R.id.image);
+        graph =(JustBeatItView) findViewById(R.id.image);
         status = (TextView) findViewById(R.id.text);
 
         debugLabel = (TextView) findViewById(R.id.debugText);
@@ -183,7 +182,7 @@ public class JustBeatItActivity extends AppCompatActivity {
                     newType = State.BEAT;
                     if (newType != currentType) {
                         beats++;
-                        image.beat();
+                        graph.beat();
                     }
                 } else if (imgAvg > rollingAverage) {
                     newType = State.NO_BEAT;

@@ -25,17 +25,18 @@ public class JustBeatItView extends View {
     }
 
 
-    private static final int TIME_TO_REDRAW = 33;
+    private static final int TIME_TO_REDRAW = 25;
 
-    private static int parentWidth = 0;
-    private static int parentHeight = 0;
+    private int parentWidth = 0;
+    private int parentHeight = 0;
 
-    private static AtomicBoolean beat = new AtomicBoolean(false);
+    private AtomicBoolean beat = new AtomicBoolean(false);
 
-    private static long lastTime = System.currentTimeMillis();
-    private static Point currentPoint = null;
+    private AtomicBoolean enabled=new AtomicBoolean(true);
+    private long lastTime = System.currentTimeMillis();
+    private Point currentPoint = null;
 
-    private static List<Float> drawPoints = Collections.synchronizedList(new ArrayList<Float>());
+    private List<Float> drawPoints = Collections.synchronizedList(new ArrayList<Float>());
 
     private RefreshHandler mRedrawHandler = new RefreshHandler();
 
@@ -74,31 +75,47 @@ public class JustBeatItView extends View {
         setMeasuredDimension(parentWidth, parentHeight);
     }
 
+    public void setEnabled(boolean enabled) {
+        this.enabled.set(enabled);
+        if (this.enabled.get()){
+            beat.set(false);
+            drawPoints.clear();
+            currentPoint = new Point(0, parentHeight / 2);
+
+            lastTime=System.currentTimeMillis();
+            mRedrawHandler.sleep(TIME_TO_REDRAW);
+        }
+    }
+
     public void update() {
-         final long now = System.currentTimeMillis();
+        if (!enabled.get()){
+            return;
+        }
+
+        final long now = System.currentTimeMillis();
 
         if (currentPoint == null) {
             currentPoint = new Point(0, parentHeight / 2);
         }
 
-        double partial=((double)parentWidth)/4000;
-        int speed= (int) (partial*(now-lastTime));
+        double partial = ((double) parentWidth) / 3000;
+        int speed = (int) (partial * (now - lastTime));
 
 
         if (beat.get()) {
-            float beatLow=parentHeight*0.8F;
-            float beatHigh=parentHeight-beatLow;
+            float beatLow = parentHeight * 0.8F;
+            float beatHigh = parentHeight - beatLow;
             drawPoints.add((float) currentPoint.x);
             drawPoints.add((float) currentPoint.y);
-            drawPoints.add((float) (currentPoint.x + speed/2));
+            drawPoints.add((float) (currentPoint.x + speed / 2));
             drawPoints.add(beatHigh);
 
-            drawPoints.add((float) (currentPoint.x + speed/2));
+            drawPoints.add((float) (currentPoint.x + speed / 2));
             drawPoints.add(beatHigh);
-            drawPoints.add((float) (currentPoint.x + speed/2));
+            drawPoints.add((float) (currentPoint.x + speed / 2));
             drawPoints.add(beatLow);
 
-            drawPoints.add((float) (currentPoint.x + speed/2));
+            drawPoints.add((float) (currentPoint.x + speed / 2));
             drawPoints.add(beatLow);
             drawPoints.add((float) (currentPoint.x + speed));
             drawPoints.add((float) currentPoint.y);
