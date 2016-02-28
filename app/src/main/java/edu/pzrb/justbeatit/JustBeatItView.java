@@ -1,39 +1,65 @@
 package edu.pzrb.justbeatit;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Matrix;
+import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
+import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.view.View;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class JustBeatItView extends View {
 
-    private static final Matrix matrix = new Matrix();
-    private static final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private static final Paint BLACK_PAINT = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private static final Paint GREEN_PAINT = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-    private static Bitmap pausedBitmap = null;
-    private static Bitmap emptyBitmap = null;
-    private static Bitmap heartBitmap = null;
+    static {
+        GREEN_PAINT.setColor(Color.GREEN);
+    }
+
+
+    private static final int TIME_TO_REDRAW = 33;
 
     private static int parentWidth = 0;
     private static int parentHeight = 0;
 
+    private static AtomicBoolean beat = new AtomicBoolean(false);
+
+    private static long lastTime = System.currentTimeMillis();
+    private static Point currentPoint = null;
+
+    private static List<Float> drawPoints = Collections.synchronizedList(new ArrayList<Float>());
+
+    private RefreshHandler mRedrawHandler = new RefreshHandler();
+
+    class RefreshHandler extends Handler {
+
+        @Override
+        public void handleMessage(Message msg) {
+            JustBeatItView.this.update();
+            JustBeatItView.this.invalidate();
+        }
+
+        public void sleep(long delayMillis) {
+            this.removeMessages(0);
+            sendMessageDelayed(obtainMessage(0), delayMillis);
+        }
+    }
+
+
     public JustBeatItView(Context context, AttributeSet attr) {
         super(context, attr);
-        pausedBitmap = BitmapFactory.decodeResource(getResources(), android.R.drawable.ic_media_pause);
-        emptyBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.empty_icon);
-        heartBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.heart_icon);
-
-
     }
 
     public JustBeatItView(Context context) {
         super(context);
-        pausedBitmap = BitmapFactory.decodeResource(getResources(), android.R.drawable.ic_media_pause);
-
     }
 
     /**
@@ -48,34 +74,78 @@ public class JustBeatItView extends View {
         setMeasuredDimension(parentWidth, parentHeight);
     }
 
+    public void update() {
+         final long now = System.currentTimeMillis();
+
+        if (currentPoint == null) {
+            currentPoint = new Point(0, parentHeight / 2);
+        }
+
+        double partial=((double)parentWidth)/4000;
+        int speed= (int) (partial*(now-lastTime));
+
+
+        if (beat.get()) {
+            float beatLow=parentHeight*0.8F;
+            float beatHigh=parentHeight-beatLow;
+            drawPoints.add((float) currentPoint.x);
+            drawPoints.add((float) currentPoint.y);
+            drawPoints.add((float) (currentPoint.x + speed/2));
+            drawPoints.add(beatHigh);
+
+            drawPoints.add((float) (currentPoint.x + speed/2));
+            drawPoints.add(beatHigh);
+            drawPoints.add((float) (currentPoint.x + speed/2));
+            drawPoints.add(beatLow);
+
+            drawPoints.add((float) (currentPoint.x + speed/2));
+            drawPoints.add(beatLow);
+            drawPoints.add((float) (currentPoint.x + speed));
+            drawPoints.add((float) currentPoint.y);
+
+            beat.set(false);
+        } else {
+            drawPoints.add((float) currentPoint.x);
+            drawPoints.add((float) currentPoint.y);
+            drawPoints.add((float) (currentPoint.x + speed));
+            drawPoints.add((float) currentPoint.y);
+        }
+
+        if (currentPoint.x + speed >= parentWidth) {
+            drawPoints.clear();
+        }
+
+        currentPoint.x = (currentPoint.x + speed) % parentWidth;
+
+        mRedrawHandler.sleep(TIME_TO_REDRAW);
+        lastTime = now;
+    }
+
+    public void beat() {
+        beat.set(true);
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
     protected void onDraw(Canvas canvas) {
-        if (canvas == null) throw new NullPointerException();
-
-        Bitmap bitmap = null;
-        if (JustBeatItActivity.getCurrent() == JustBeatItActivity.State.NO_BEAT){
-            bitmap = emptyBitmap;
-        }else if (JustBeatItActivity.getCurrent() == JustBeatItActivity.State.BEAT){
-            bitmap = heartBitmap;
-        }else{
-            bitmap = pausedBitmap;
+        if (canvas == null) {
+            throw new NullPointerException();
         }
 
-        int bitmapX = bitmap.getWidth() / 2;
-        int bitmapY = bitmap.getHeight() / 2;
+        canvas.drawRect(0, 0, parentWidth, parentHeight, BLACK_PAINT);
 
-        int parentX = parentWidth / 2;
-        int parentY = parentHeight / 2;
+        if (currentPoint == null) {
+            update();
+            return;
+        }
 
-        int centerX = parentX - bitmapX;
-        int centerY = parentY - bitmapY;
-
-        matrix.reset();
-        matrix.postTranslate(centerX, centerY);
-        canvas.drawBitmap(bitmap, matrix, paint);
-        invalidate();
+        float[] array = new float[drawPoints.size()];
+        for (int i = 0; i < drawPoints.size(); i++) {
+            array[i] = drawPoints.get(i);
+        }
+        canvas.drawLines(array, GREEN_PAINT);
+        canvas.drawPoint(currentPoint.x, currentPoint.y, GREEN_PAINT);
     }
 }

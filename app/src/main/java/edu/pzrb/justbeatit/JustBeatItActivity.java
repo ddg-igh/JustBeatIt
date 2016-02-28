@@ -6,6 +6,8 @@ import android.content.DialogInterface;
 import android.content.res.Configuration;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.PowerManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -19,6 +21,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JustBeatItActivity extends AppCompatActivity {
@@ -30,7 +35,7 @@ public class JustBeatItActivity extends AppCompatActivity {
     private static SurfaceHolder previewHolder = null;
 
     private static Camera camera = null;
-    private static View image = null;
+    private static JustBeatItView image = null;
 
     private static TextView status = null;
 
@@ -48,10 +53,6 @@ public class JustBeatItActivity extends AppCompatActivity {
 
     private static State currentType = State.NO_BEAT;
 
-    public static State getCurrent() {
-        return currentType;
-    }
-
     private static int beatsIndex = 0;
     private static final int beatsArraySize = 3;
     private static final int[] beatsArray = new int[beatsArraySize];
@@ -60,6 +61,8 @@ public class JustBeatItActivity extends AppCompatActivity {
 
     private static boolean enabled = true;
     private static int treshold = 200;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,7 +102,7 @@ public class JustBeatItActivity extends AppCompatActivity {
         previewHolder.addCallback(surfaceCallback);
         previewHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
-        image = findViewById(R.id.image);
+        image =(JustBeatItView) findViewById(R.id.image);
         status = (TextView) findViewById(R.id.text);
 
         debugLabel = (TextView) findViewById(R.id.debugText);
@@ -107,6 +110,7 @@ public class JustBeatItActivity extends AppCompatActivity {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "DoNotDimScreen");
     }
+
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
@@ -142,16 +146,21 @@ public class JustBeatItActivity extends AppCompatActivity {
          */
         @Override
         public void onPreviewFrame(byte[] data, Camera cam) {
-            if (data == null) throw new NullPointerException();
+            if (data == null){
+                throw new NullPointerException();
+            }
             Camera.Size size = cam.getParameters().getPreviewSize();
-            if (size == null) throw new NullPointerException();
-            if(currentType == State.PAUSED) return;
-            if (!processing.compareAndSet(false, true)) return;
+            if (size == null){
+                throw new NullPointerException();
+            }
+            if(currentType == State.PAUSED){
+                return;
+            }
+            if (!processing.compareAndSet(false, true)){
+                return;
+            }
 
-            int width = size.width;
-            int height = size.height;
-
-            int imgAvg = ImageProcessing.decodeYUV420SPtoRedAvg(data.clone(), height, width);
+            int imgAvg = ImageProcessing.decodeYUV420SPtoRedAvg(data.clone(),size.width, size.height);
             debugLabel.setText("ImgAvg: " + imgAvg);
             if (imgAvg == 0 || imgAvg == 255) {
                 processing.set(false);
@@ -174,20 +183,21 @@ public class JustBeatItActivity extends AppCompatActivity {
                     newType = State.BEAT;
                     if (newType != currentType) {
                         beats++;
-                        // Log.d(TAG, "BEAT!! beats="+beats);
+                        image.beat();
                     }
                 } else if (imgAvg > rollingAverage) {
                     newType = State.NO_BEAT;
                 }
 
-                if (averageIndex == averageArraySize) averageIndex = 0;
+                if (averageIndex == averageArraySize){
+                    averageIndex = 0;
+                }
                 averageArray[averageIndex] = imgAvg;
                 averageIndex++;
 
                 // Transitioned from one state to another to the same
                 if (newType != currentType) {
                     currentType = newType;
-                    image.postInvalidate();
                 }
 
                 long endTime = System.currentTimeMillis();
@@ -202,20 +212,24 @@ public class JustBeatItActivity extends AppCompatActivity {
                         return;
                     }
 
-                    if (beatsIndex == beatsArraySize) beatsIndex = 0;
+                    if (beatsIndex == beatsArraySize){
+                        beatsIndex = 0;
+                    }
                     beatsArray[beatsIndex] = dpm;
                     beatsIndex++;
 
                     int beatsArrayAvg = 0;
                     int beatsArrayCnt = 0;
-                    for (int i = 0; i < beatsArray.length; i++) {
-                        if (beatsArray[i] > 0) {
-                            beatsArrayAvg += beatsArray[i];
+                    for (int aBeatsArray : beatsArray) {
+                        if (aBeatsArray > 0) {
+                            beatsArrayAvg += aBeatsArray;
                             beatsArrayCnt++;
                         }
                     }
                     int beatsAvg = (beatsArrayAvg / beatsArrayCnt);
-                    if (enabled) status.setText(String.valueOf(beatsAvg));
+                    if (enabled){
+                        status.setText(String.valueOf(beatsAvg));
+                    }
                     startTime = System.currentTimeMillis();
                     beats = 0;
                 }
