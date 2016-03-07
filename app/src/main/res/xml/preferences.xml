@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    <EditTextPreference android:title="@string/preference_threshold"
+        android:key="@string/preference_threshold_key"
+        android:defaultValue="@string/preference_threshold_default"
+        android:inputType="numberSigned" />
+
+    <EditTextPreference android:title="@string/preference_graph_time"
+        android:key="@string/preference_graph_time_key"
+        android:defaultValue="@string/preference_graph_time_default"
+        android:inputType="numberSigned"/>
+</PreferenceScreen>

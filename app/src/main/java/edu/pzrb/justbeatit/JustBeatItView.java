@@ -1,12 +1,14 @@
 package edu.pzrb.justbeatit;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -32,13 +34,18 @@ public class JustBeatItView extends View {
 
     private AtomicBoolean beat = new AtomicBoolean(false);
 
-    private AtomicBoolean enabled=new AtomicBoolean(true);
+    private AtomicBoolean enabled = new AtomicBoolean(true);
     private long lastTime = System.currentTimeMillis();
     private Point currentPoint = null;
 
     private List<Float> drawPoints = Collections.synchronizedList(new ArrayList<Float>());
 
     private RefreshHandler mRedrawHandler = new RefreshHandler();
+
+
+    private SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+    private  final String prefTimeScaleKey=getContext().getString(R.string.preference_graph_time_key);
+    private  final String prefTimeScaleDefault=getContext().getString(R.string.preference_graph_time_default);
 
     class RefreshHandler extends Handler {
 
@@ -77,18 +84,18 @@ public class JustBeatItView extends View {
 
     public void setEnabled(boolean enabled) {
         this.enabled.set(enabled);
-        if (this.enabled.get()){
+        if (this.enabled.get()) {
             beat.set(false);
             drawPoints.clear();
             currentPoint = new Point(0, parentHeight / 2);
 
-            lastTime=System.currentTimeMillis();
+            lastTime = System.currentTimeMillis();
             mRedrawHandler.sleep(TIME_TO_REDRAW);
         }
     }
 
     public void update() {
-        if (!enabled.get()){
+        if (!enabled.get()) {
             return;
         }
 
@@ -98,7 +105,8 @@ public class JustBeatItView extends View {
             currentPoint = new Point(0, parentHeight / 2);
         }
 
-        double partial = ((double) parentWidth) / 3000;
+        int timeScale=Integer.parseInt(preferences.getString(prefTimeScaleKey,prefTimeScaleDefault));
+        double partial = ((double) parentWidth) / timeScale;
         int speed = (int) (partial * (now - lastTime));
 
 

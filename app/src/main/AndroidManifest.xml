@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="edu.pzrb.justbeatit">
 
-    <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="23"/>
+    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="23"/>
 
     <uses-feature android:name="android.hardware.camera" android:required="true"/>
     <uses-feature android:name="android.hardware.camera.flash" android:required="true"/>
@@ -27,6 +27,12 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name=".SettingsActivity"
+            android:label="@string/settings"
+            android:parentActivityName=".JustBeatItActivity">
+            <meta-data android:name="android.support.PARENT_ACTIVITY"
+                android:value=".JustBeatItActivity"/>
         </activity>
     </application>
 
