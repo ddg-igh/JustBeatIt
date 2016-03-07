@@ -12,4 +12,9 @@
         android:orderInCategory="90"
         android:title="@string/action_settings"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_tutorial"
+        android:orderInCategory="80"
+        android:title="@string/action_tutorial"
+        app:showAsAction="never" />
 </menu>

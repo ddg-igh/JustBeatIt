@@ -46,9 +46,7 @@ public class JustBeatItActivity extends AppCompatActivity {
 
     public enum State {
         NO_BEAT, BEAT, PAUSED
-    }
-
-    ;
+    };
 
     private State currentType = State.NO_BEAT;
 
@@ -88,18 +86,15 @@ public class JustBeatItActivity extends AppCompatActivity {
                     currentType = State.PAUSED;
 
                     fab.setImageResource(android.R.drawable.ic_media_play);
-
                     graph.setEnabled(false);
                 } else {
                     Snackbar.make(view, getString(R.string.scan_resume), Snackbar.LENGTH_LONG).setAction("Action", null).show();
                     enabled = true;
 
-
                     parameters.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
                     currentType = State.NO_BEAT;
 
                     fab.setImageResource(android.R.drawable.ic_media_pause);
-
                     graph.setEnabled(true);
                 }
                 camera.setParameters(parameters);
@@ -326,7 +321,6 @@ public class JustBeatItActivity extends AppCompatActivity {
                 }
             }
         }
-
         return result;
     }
 
@@ -349,6 +343,13 @@ public class JustBeatItActivity extends AppCompatActivity {
             return true;
         } else if (id == R.id.action_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
+            return true;
+        }else if (id == R.id.action_tutorial) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(getString(R.string.action_tutorial));
+            builder.setMessage(getString(R.string.tutorial_text));
+            AlertDialog dialog = builder.create();
+            dialog.show();
             return true;
         }
 
